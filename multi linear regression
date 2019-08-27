@@ -1,0 +1,115 @@
+
+rm(list = ls(all= TRUE))
+#Setting the working directory
+setwd(":\\Insofe\\20170903_Batch_32_CSE7302c_Lab02_M_Linear_Regression_Activity ")
+
+###Reading the train data and test data (evaluation)###
+train_data = read.csv("CustomerData.csv",  header = T, sep = "," )
+
+###Understanding the "structure" data to see the data### 
+str(train_data)
+###Are all the variables with appropriate data type. If  not we need to convert them###
+test =read.csv("Eval.csv",  header = T, sep = "," )
+names(train_data)
+names(test)
+!(names(train_data) %in% names(test))
+
+###Looking at the summary of the train_train_data###
+str(train_data)
+str(test)
+
+###Do you observe any anomalies###
+train_data$City = as.factor(as.character(train_data$City))
+summary(train_data)
+
+test$City= as.factor(as.character(test$City))
+#Observe that the maximum values for age is 113. Is it an outlier
+#Lets draw boxplots for it
+boxplot(train_data$MinAgeOfChild, train_data$MaxAgeOfChild)
+
+###Remove the extreme points from the analysis###
+train_data1 = train_data[!((train_data$MaxAgeOfChild == max(train_data$MaxAgeOfChild))|(train_data$MinAgeOfChild == max(train_data$MinAgeOfChild))),]
+train_data1 = train_data1[, -1]
+
+###Build the Linear Regression Model and obtain the summary###
+###mod1 = lm(y~x1+x2+x3, data = data)
+mod_lm = lm(train_data1$TotalRevenueGenerated ~ .,data = train_data1 )
+summary(mod_lm)
+
+
+###Interpretation of the output###
+#Residuals
+#Estimates, SE, t-values, p-values 
+#F statistic and p-value
+
+
+###Plot the model###
+par(mfrow = c(1,1))
+par(mfrow=c(2,2))
+plot(mod_lm)
+
+
+
+###What are your observations###
+ext = c(1764, 974, 667)
+datax = train_data1[row.names(train_data1) %in% ext,]
+
+### Make Predictions using the model###
+pred_train = mod_lm$fitted.values
+test_prediction = predict(mod_lm, newdata = test)
+
+
+###Evaluation on metric###
+library(DMwR)
+regr.eval(test$TotalRevenueGenerated, test_prediction)
+
+###Are the the variables really significant in explaining the 
+##dependent variable/target. Can we reduce the dimensions
+##Lets try to identify important variables in explaining the y
+library(car)
+vif(mod_lm)
+
+library(MASS)
+stepAIC(mod_lm)
+mod_lm_mass<-lm(formula = TotalRevenueGenerated ~ City + NoOfChildren + MinAgeOfChild + 
+                  Tenure + FrquncyOfPurchase + NoOfUnitsPurchased + FrequencyOFPlay + 
+                  NoOfGamesPlayed + NoOfGamesBought+FavoriteChannelOfTransaction+
+                  FavoriteGame,data = train_data)
+summary(mod_lm_mass)
+
+####What to be done with extreme points observed in the plots###
+
+#Remove the points that are extreme.. Do we need to remove the points at all in the first place?
+#What you observe in the plots are the rownames.
+ext=c(1764,974,667)
+train_data2 = train_data1[-ext,]
+mod_lmTrained = lm(train_data2$TotalRevenueGenerated ~ .,data = train_data2 )
+summary(mod_lmTrained)
+
+
+###Interpretation of the output###
+#Residuals
+#Estimates, SE, t-values, p-values 
+#F statistic and p-value
+
+
+###Plot the model###
+par(mfrow = c(1,1))
+par(mfrow=c(2,2))
+plot(mod_lmTrained)
+
+pred_train1 = mod_lmTrained$fitted.values
+test_prediction1 = predict(mod_lmTrained, newdata = test)
+regr.eval(test$TotalRevenueGenerated, test_prediction1)
+
+
+##changing data to log transformation
+train_data2$Target = log(train_data2$TotalRevenueGenerated)
+
+summary(train_data2)
+data2 = train_data2[,-13]
+model = lm(Target ~.,   data = data2)
+model
+y = predict(model, newdata = test[,-13])
+y1= exp(y)
+
