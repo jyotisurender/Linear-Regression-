@@ -1,2 +1,2 @@
 # Linear-Regression-
-Predict Revenue generation for a store for different branches 
+Predict Revenue generation for a store for different branches
